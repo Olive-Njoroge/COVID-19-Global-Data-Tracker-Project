@@ -5,49 +5,38 @@ import seaborn as sns
 # Load the dataset
 df = pd.read_csv('owid-covid-data.csv')
 
-# Check columns
-print(df.columns)
-
-# Preview rows
+# Check columns and preview data
+print("Columns:", df.columns)
 print(df.head())
 
 # Identify missing values
 missing_values = df.isnull().sum()
-print(missing_values)
+print("\nMissing values per column:\n", missing_values)
 
 # Filter for countries of interest
-countries = ['Angola', 'United States', 'India']
-filtered_df = df[df['location'].isin(countries)]
+countries = ['United States', 'India']
+filtered_df = df[df['location'].isin(countries)].copy()
 
-# Show the result
-print(filtered_df)
+print("\nFiltered Data for countries of interest:")
+print(filtered_df.head())
 
 # Drop rows with missing values in critical columns
 critical_columns = ['date', 'location', 'total_cases', 'total_deaths', 'new_cases', 'new_deaths', 'total_vaccinations']
 df_cleaned = df.dropna(subset=critical_columns)
-
-# Show result
+print("\nData after dropping rows with missing critical columns:")
 print(df_cleaned.head())
 
 # Convert 'date' column to datetime format
 df['date'] = pd.to_datetime(df['date'])
-
-# Check the result
-print(df['date'].dtype)
-print(df.head())
+filtered_df['date'] = pd.to_datetime(filtered_df['date'])
 
 # Fill remaining missing values with zeros
-df = df.fillna(0)
-
-# --- Begin added analysis and visualizations ---
-
-# Work with filtered_df for consistent processing: filter again after filling NAs
-filtered_df = df[df['location'].isin(countries)].copy()
+df.fillna(0, inplace=True)
 filtered_df.fillna(0, inplace=True)
 
 # Calculate death rate safely (avoid division by zero)
 filtered_df['death_rate'] = filtered_df.apply(
-    lambda row: row['total_deaths'] / row['total_cases'] if row['total_cases'] > 0 else 0,
+    lambda row: (row['total_deaths'] / row['total_cases']) if row['total_cases'] > 0 else 0,
     axis=1
 )
 
@@ -104,7 +93,7 @@ plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()
 
-# 5. Optional: Heatmap of correlations among numeric columns for filtered countries
+# 5. Heatmap of correlations among numeric columns for filtered countries
 numeric_cols = ['total_cases', 'total_deaths', 'new_cases', 'new_deaths', 'total_vaccinations']
 corr_df = filtered_df[numeric_cols].corr()
 
@@ -117,3 +106,53 @@ plt.show()
 # 6. Descriptive statistics for filtered countries
 print("\nDescriptive Statistics for Selected Countries:")
 print(filtered_df.describe())
+
+# --- Vaccination rollout analysis ---
+
+# 7. Plot cumulative vaccinations over time for selected countries
+plt.figure(figsize=(12,6))
+for country in countries:
+    data = filtered_df[filtered_df['location'] == country]
+    plt.plot(data['date'], data['total_vaccinations'], label=country)
+plt.title('Cumulative COVID-19 Vaccinations Over Time')
+plt.xlabel('Date')
+plt.ylabel('Total Vaccinations (doses)')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# 8. Calculate % vaccinated population (approximate)
+filtered_df['percent_vaccinated'] = filtered_df.apply(
+    lambda row: (row['total_vaccinations'] / row['population']) * 100 if row['population'] > 0 else 0,
+    axis=1
+)
+
+# Get latest vaccination % per country
+latest_vax = filtered_df.groupby('location').apply(lambda x: x.loc[x['date'].idxmax()])
+
+plt.figure(figsize=(8,6))
+sns.barplot(data=latest_vax.reset_index(drop=True), x='location', y='percent_vaccinated', palette='magma')
+plt.title('Percentage of Population Vaccinated (based on total doses)')
+plt.xlabel('Country')
+plt.ylabel('Percent Vaccinated (%)')
+plt.ylim(0, 100)
+plt.tight_layout()
+plt.show()
+
+# Optional: Pie chart of vaccinated vs unvaccinated for each country (latest date)
+for country in countries:
+    latest = latest_vax.loc[country]
+    vaccinated = latest['total_vaccinations']
+    population = latest['population']
+    unvaccinated = max(population - vaccinated, 0)
+    plt.figure(figsize=(6,6))
+    plt.pie(
+        [vaccinated, unvaccinated],
+        labels=['Vaccinated', 'Unvaccinated'],
+        colors=['#4CAF50', '#F44336'],
+        autopct='%1.1f%%',
+        startangle=140
+    )
+    plt.title(f'Vaccination Coverage in {country} (Latest Data)')
+    plt.show()
