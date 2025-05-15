@@ -67,9 +67,6 @@ Run all cells to view visualizations and insights
 
 📝 Notes
 
-<br>
-View from jupyter Notebooks<br>
-https://nb.anaconda.cloud/jupyterhub/user/6e9c45d9-3d4e-4b36-b036-d7909853efc0/lab/tree/Covid-19/Covid.ipynb
 Missing values in critical columns were dropped to ensure clean analysis
 
 All dates were parsed into datetime format
@@ -80,3 +77,9 @@ Interactive visualizations were created with Plotly
 
 💡 License
 This project is for educational purposes. Data sourced from Our World in Data.
+
+
+
+<br>
+View from jupyter Notebooks<br>
+https://nb.anaconda.cloud/jupyterhub/user/6e9c45d9-3d4e-4b36-b036-d7909853efc0/lab/tree/Covid-19/Covid.ipynb
