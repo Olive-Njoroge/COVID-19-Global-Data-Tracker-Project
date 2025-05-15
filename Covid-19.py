@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.express as px  # <-- Added for choropleth map
 
 # Load the dataset
 df = pd.read_csv('owid-covid-data.csv')
@@ -156,3 +157,25 @@ for country in countries:
     )
     plt.title(f'Vaccination Coverage in {country} (Latest Data)')
     plt.show()
+
+# --- Choropleth Map for total vaccinations ---
+
+# Prepare latest data by country with iso_code (remove missing iso_code)
+latest_data = df[df['date'] == latest_date].copy()
+latest_data = latest_data[latest_data['iso_code'].notnull() & (latest_data['iso_code'] != '')]
+
+fig = px.choropleth(
+    latest_data,
+    locations='iso_code',       # ISO 3-letter codes
+    color='total_vaccinations',
+    hover_name='location',
+    color_continuous_scale='Viridis',
+    title=f'COVID-19 Total Vaccinations by Country (as of {latest_date.date()})',
+    labels={'total_vaccinations': 'Total Vaccinations'}
+)
+
+fig.update_layout(
+    geo=dict(showframe=False, showcoastlines=True)
+)
+
+fig.show()
