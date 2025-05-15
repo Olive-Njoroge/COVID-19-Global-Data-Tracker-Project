@@ -15,7 +15,7 @@ missing_values = df.isnull().sum()
 print("\nMissing values per column:\n", missing_values)
 
 # Filter for countries of interest
-countries = ['United States', 'India']
+countries = ['United States', 'India', 'Italy']
 filtered_df = df[df['location'].isin(countries)].copy()
 
 print("\nFiltered Data for countries of interest:")
